@@ -1,14 +1,14 @@
 #include "/home/diego/Documents/Uni/Tesi/hello-libtorch/include/martino.hpp"
 
 
-Net::Net() {
+MartinoNet::MartinoNet() {
     // Construct and register two Linear submodules.
     fc1 = register_module("fc1", torch::nn::Linear(784, 64));
     fc2 = register_module("fc2", torch::nn::Linear(64, 32));
     fc3 = register_module("fc3", torch::nn::Linear(32, 10));
   }
 
-torch::Tensor Net::forward(torch::Tensor x) {
+torch::Tensor MartinoNet::forward(torch::Tensor x) {
     // Use one of many tensor manipulation functions.
     x = fc1->forward(x.reshape({x.size(0), 784}));
     x = torch::relu(x);
