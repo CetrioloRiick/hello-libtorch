@@ -1,32 +1,35 @@
 cmake_minimum_required(VERSION 3.18 FATAL_ERROR)
-project(example-app)
+project(hello_libtorch LANGUAGES CXX)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-list(APPEND CMAKE_PREFIX_PATH "/opt/libtorch")
+set(CMAKE_PREFIX_PATH "/opt/libtorch" ${CMAKE_PREFIX_PATH})
+
 find_package(Torch REQUIRED)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TORCH_CXX_FLAGS}")
+include(FetchContent)
 
+FetchContent_Declare(
+    cxxopts
+    GIT_REPOSITORY https://github.com/jarro2783/cxxopts.git
+    GIT_TAG v3.2.0
+    GIT_SHALLOW TRUE
+)
+FetchContent_MakeAvailable(cxxopts)
 
-
-include_directories(${CMAKE_SOURCE_DIR}/include)
-
-# Executable: binarize.out
 add_executable(main
     src/main.cpp
     src/martino.cpp
 )
 
-target_link_libraries(main "${TORCH_LIBRARIES}")
+target_include_directories(main PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_compile_features(main PRIVATE cxx_std_17)
+target_link_libraries(main PRIVATE "${TORCH_LIBRARIES}" cxxopts::cxxopts)
+set_property(TARGET main PROPERTY CXX_STANDARD ${TORCH_CXX_STANDARD})
 
-# The following code block is suggested to be used on Windows.
-# According to https://github.com/pytorch/pytorch/issues/25457,
-# the DLLs need to be copied to avoid memory errors.
-if (MSVC)
-  file(GLOB TORCH_DLLS "${TORCH_INSTALL_PREFIX}/lib/*.dll")
-  add_custom_command(TARGET example-app
-                     POST_BUILD
-                     COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                     ${TORCH_DLLS}
-                     $<TARGET_FILE_DIR:example-app>)
-endif (MSVC)
-
+if(MSVC)
+    file(GLOB TORCH_DLLS "${TORCH_INSTALL_PREFIX}/lib/*.dll")
+    add_custom_command(TARGET main POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        ${TORCH_DLLS}
+        $<TARGET_FILE_DIR:main>
+    )
+endif()
